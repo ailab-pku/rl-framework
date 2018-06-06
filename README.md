@@ -1,7 +1,7 @@
 # rl-framework
 General framework of reinforcement learning algorithms. Implemented for experiments of AILab, Peking University.
 
-### Baisc Rules
+### Basic Rules
 
 - Universal
 - Easy to use / edit
