@@ -13,10 +13,11 @@ from evaluator import Evaluator
 
 def train(nb_iterations, agent, env, evaluator):
     visualization = args.visualization
-    step = episode = episode_steps = 0
+    log = step = episode = episode_steps = 0
     episode_reward = 0.
     observation = None
     apply_noise = args.apply_noise
+    checkpoint_num = -1 if args.resume is None else args.resume_num
     time_stamp = time.time()
 
     while step <= nb_iterations:
@@ -24,18 +25,14 @@ def train(nb_iterations, agent, env, evaluator):
             observation = env.reset()
             agent.reset(observation)
 
-        if step <= args.warmup:
+        if step <= args.warmup and args.resume is None:
             action = agent.random_action()
         else:
             action = agent.select_action(observation, apply_noise=apply_noise)
 
-        observation, reward, done, info = env.step(action)
+        observation, reward, done, _ = env.step(action)
         if visualization:
             env.render()
-        if step > args.warmup:
-            Q, critic_loss = agent.update_policy()
-            writer.add_scalar('train/Q', Q, step)
-            writer.add_scalar('train/critic loss', critic_loss, step)
         agent.observe(reward, observation, done)
 
         step += 1
@@ -43,6 +40,12 @@ def train(nb_iterations, agent, env, evaluator):
         episode_reward += reward
         if done:
             if step > args.warmup:
+                # checkpoint
+                if episode > 0 and episode % args.save_interval == 0:
+                    checkpoint_num += 1
+                    print('[save model] #{} in {}'.format(checkpoint_num, args.output))
+                    agent.save_model(args.output, checkpoint_num)
+                
                 # validation
                 if episode > 0 and episode % args.validate_interval == 0:
                     validation_reward = evaluator(env, agent.select_action, visualize=False)
@@ -57,6 +60,12 @@ def train(nb_iterations, agent, env, evaluator):
             print('episode #{}: reward={}, steps={}, time={:.2f}'.format(
                     episode, episode_reward, episode_steps, episode_time
             ))
+
+            for _ in range(episode_steps):
+                log += 1
+                Q, critic_loss = agent.update_policy()
+                writer.add_scalar('train/Q', Q, log)
+                writer.add_scalar('train/critic loss', critic_loss, log)
 
             observation = None
             episode_steps = 0
@@ -84,8 +93,8 @@ if __name__ == "__main__":
     parser.add_argument('--validate_interval', default=10, type=int, help='how many episodes to validate')
     parser.add_argument('--save_interval', default=100, type=int, help='how many episodes to save model')
 
-    parser.add_argument('--validation_episodes', default=1, type=int, help='number of episodes during validation')
-    parser.add_argument('--checkpoint_interval', default=100, type=int, help='episodes interval to save model')
+    parser.add_argument('--resume', default=None, type=str, help='resuming model path')
+    parser.add_argument('--resume_num', default=-1, type=int, help='number of the weight to load')
     parser.add_argument('--output', default='output', type=str)
     parser.add_argument('--visualization', dest='visualization', action='store_true')
     parser.add_argument('--cuda', dest='cuda', action='store_true')
@@ -124,4 +133,10 @@ if __name__ == "__main__":
     evaluator = Evaluator(args)
 
     agent = DDPG(nb_states, nb_actions, args)
+
+    # resume train
+    if args.resume is not None and args.resume_num is not -1:
+        print('resume train, load weight file: {}...'.format(args.resume_num))
+        agent.load_model(args.output, args.resume_num)
+
     train(args.iterations, agent, env, evaluator)
