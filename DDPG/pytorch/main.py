@@ -90,8 +90,9 @@ if __name__ == "__main__":
     parser.add_argument('--iterations', default=2000000, type=int, help='iterations during training')
     parser.add_argument('--warmup', default=100, type=int, help='timestep without training to fill the replay buffer')
     parser.add_argument('--apply_noise', dest='apply_noise', default=True, action='store_true', help='apply noise to the action')
-    parser.add_argument('--validate_interval', default=10, type=int, help='how many episodes to validate')
-    parser.add_argument('--save_interval', default=100, type=int, help='how many episodes to save model')
+    parser.add_argument('--validate_interval', default=10, type=int, help='episode interval to validate')
+    parser.add_argument('--save_interval', default=100, type=int, help='episode interval to save model')
+    parser.add_argument('--validate_episodes', default=1, type=int, help='how many episodes to validate')
 
     parser.add_argument('--resume', default=None, type=str, help='resuming model path')
     parser.add_argument('--resume_num', default=-1, type=int, help='number of the weight to load')

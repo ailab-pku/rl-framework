@@ -1,10 +1,10 @@
 class Evaluator(object):
     def __init__(self, args):
-        self.validate_interval = args.validate_interval
+        self.validate_episodes = args.validate_episodes
 
     def __call__(self, env, policy, visualize=False):
         result = []
-        for _ in range(self.validate_interval):
+        for _ in range(self.validate_episodes):
             observation = env.reset()
             episode_steps = 0
             episode_rewards = 0.
