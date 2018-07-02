@@ -122,7 +122,7 @@ class DDPG(object):
         soft_update(self.actor_target, self.actor, self.tau)
         soft_update(self.critic_target, self.critic, self.tau)
 
-        return to_numpy(-policy_loss), to_numpy(critic_loss)
+        return to_numpy(-policy_loss), to_numpy(critic_loss), to_numpy(q_values.mean())
 
     def save_model(self, output, num=1):
         if self.use_cuda:

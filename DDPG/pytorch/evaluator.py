@@ -1,22 +1,28 @@
 class Evaluator(object):
     def __init__(self, args):
-        self.validate_episodes = args.validate_episodes
+        self.validation_episodes = args.validation_episodes
+        self.action_repeat = args.action_repeat
+        self.max_episode_length = args.max_episode_length // self.action_repeat
 
-    def __call__(self, env, policy, visualize=False):
+    def __call__(self, env, policy, vis=False):
         result = []
-        for _ in range(self.validate_episodes):
+        for _ in range(self.validation_episodes):
             observation = env.reset()
             episode_steps = 0
             episode_rewards = 0.
 
             done = False
-            while not done:
+            while not done and episode_steps <= self.max_episode_length:
                 action = policy(observation)
-                observation, reward, done, _ = env.step(action)
-                if visualize:
-                    env.render()
+                # action repeat
+                for _ in range(self.action_repeat):
+                    _, reward, done, _ = env.step(action)
+                    episode_rewards += reward
+                    if vis:
+                        env.render()
+                    if done:
+                        break
                 episode_steps += 1
-                episode_rewards += reward
             result.append(episode_rewards)
 
         return result
