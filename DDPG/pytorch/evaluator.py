@@ -16,13 +16,14 @@ class Evaluator(object):
                 action = policy(observation)
                 # action repeat
                 for _ in range(self.action_repeat):
-                    _, reward, done, _ = env.step(action)
+                    observation, reward, done, _ = env.step(action)
                     episode_rewards += reward
+                    episode_steps += 1
                     if vis:
                         env.render()
                     if done:
                         break
-                episode_steps += 1
+            
             result.append(episode_rewards)
 
         return result
